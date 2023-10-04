@@ -15,12 +15,9 @@ func isPalindrome(_ s: String) -> Bool {
     }
 }
 
-
-
 print("You're going to check if your word is a palindrom.\n")
 print("You can enter a word from console or read it from file.\n Type 'c' for conslole and 'f' for file")
 let choice = readLine()
-
 if choice == "c"{
     while true {
         print("Enter a string or click Enter to finish:")
@@ -59,3 +56,4 @@ if choice == "f"{
     
 }
 print("Goodbye!")
+
