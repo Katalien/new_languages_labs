@@ -1,39 +1,69 @@
 use std::io::{self, Write};
+use std::thread;
+use std::sync::{mpsc, Arc, Mutex};
 
-fn merge_sort(arr: Vec<&str>) -> Vec<&str> {
-    let len = arr.len();
-    if len <= 1 {
-        return arr;
-    }
-    let mid = len / 2;
-    let left = merge_sort(arr[..mid].to_vec());
-    let right = merge_sort(arr[mid..].to_vec());
-    let mut result = merge(left, right);
-    return result;
-}
+const MAX_THREADS: usize = 4;
 
-fn merge<'a>(left: Vec<&'a str>, right: Vec<&'a str>) -> Vec<&'a str> {
+fn merge_mt(arr_left: Vec<String>, arr_right: Vec<String>) -> Vec<String> {
     let mut result = Vec::new();
-    let mut left_idx = 0;
-    let mut right_idx = 0;
-    while left_idx < left.len() && right_idx < right.len() {
-        if left[left_idx] < right[right_idx] {
-            result.push(left[left_idx]);
-            left_idx += 1;
+    let mut left_ptr = 0;
+    let mut right_ptr = 0;
+
+    while left_ptr < arr_left.len() && right_ptr < arr_right.len() {
+        if arr_left[left_ptr] < arr_right[right_ptr] {
+            result.push(arr_left[left_ptr].clone());
+            left_ptr += 1;
         } else {
-            result.push(right[right_idx]);
-            right_idx += 1;
+            result.push(arr_right[right_ptr].clone());
+            right_ptr += 1;
         }
     }
-    while left_idx < left.len() {
-        result.push(left[left_idx]);
-        left_idx += 1;
+
+    while left_ptr < arr_left.len() {
+        result.push(arr_left[left_ptr].clone());
+        left_ptr += 1;
     }
-    while right_idx < right.len() {
-        result.push(right[right_idx]);
-        right_idx += 1;
+
+    while right_ptr < arr_right.len() {
+        result.push(arr_right[right_ptr].clone());
+        right_ptr += 1;
     }
-    return result;
+
+    result
+}
+
+fn mergesort_mt_helper(arr: Vec<String>, left: usize, right: usize, depth: usize) -> Vec<String> {
+    if right - left > 1 {
+        let mid = (left + right) / 2;
+        let new_depth = depth + 1;
+
+        let (mut arr_left, mut arr_right) = match arr.split_at(mid) {
+            (l, r) => (l.to_vec(), r.to_vec())
+        };
+        let arr_left_len = arr_left.len();
+        let arr_right_len = arr_right.len();
+
+        if new_depth < MAX_THREADS {
+            let (sender, receiver) = mpsc::channel();
+            let left_ptr = Arc::new(Mutex::new(arr_left));
+            let _ = thread::spawn(move || {
+                let left_sorted = mergesort_mt_helper(left_ptr.lock().unwrap().clone(), 0, arr_left_len, new_depth);
+                sender.send(left_sorted).unwrap();
+            });
+            arr_right = mergesort_mt_helper(arr_right, 0, arr_right_len, new_depth);
+            arr_left = receiver.recv().unwrap();
+        } else {
+            arr_left = mergesort_mt_helper(arr_left, 0, arr_left_len, new_depth);
+            arr_right = mergesort_mt_helper(arr_right, 0, arr_right_len, new_depth);
+        }
+
+        return merge_mt(arr_left, arr_right);
+    }
+    arr
+}
+
+pub fn mergesort_mt(arr: Vec<String>, left: usize, right: usize) -> Vec<String> {
+    mergesort_mt_helper(arr, left, right, 0)
 }
 
 fn main() {
@@ -53,8 +83,7 @@ fn main() {
     for word in &input_vec {
         print!("{} ", word);
     }
-    let words_vec: Vec<&str> = input_vec.iter().map(std::ops::Deref::deref).collect();
-    let sorted = merge_sort(words_vec);
+    let sorted = mergesort_mt(input_vec.clone(), 0, input_vec.len());
     println!("\nSorted words:");
     for item in sorted {
         print!("{} ", item);
