@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch erlang",
+            "type": "erlang",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "arguments": "-s count_rect_area main"
+        }
+    ]
+}
