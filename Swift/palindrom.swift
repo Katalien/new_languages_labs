@@ -1,16 +1,17 @@
+import Swift
 import Foundation
 
-func isPalindrome(_ s: String, _ startIdx: String.Index, _ endIdx: String.Index) -> Bool {
-    if startIdx >= endIdx {
+func isPalindrome(_ s: inout String, _ startIdx: String.Index, _ endIdx: String.Index) -> Bool {
+    guard startIdx < endIdx else {
         return true
+    }
+    
+    if s[startIdx] == s[endIdx] {
+        let nextStartIdx = s.index(after: startIdx)
+        let prevEndIdx = s.index(before: endIdx)
+        return isPalindrome(&s, nextStartIdx, prevEndIdx)
     } else {
-        if s[startIdx] == s[endIdx] {
-            let nextStartIdx = s.index(after: startIdx)
-            let prevEndIdx = s.index(before: endIdx)
-            return isPalindrome(s, nextStartIdx, prevEndIdx)
-        } else {
-            return false
-        }
+        return false
     }
 }
 
@@ -20,18 +21,17 @@ if let choice = readLine() {
     if choice == "c" {
         while true {
             print("Enter a string or click Enter to finish:")
-            if let input = readLine() {
-                if input.isEmpty {
-                    break
-                }
-                let cleanedInput = input.lowercased().filter { $0.isLetter }
-                let startIndex = cleanedInput.startIndex
-                let endIndex = cleanedInput.index(before: cleanedInput.endIndex)
-                if isPalindrome(cleanedInput, startIndex, endIndex) {
+            if let input = readLine(), !input.isEmpty {
+                var stringToCheck = input.lowercased().filter { $0.isLetter }
+                let startIndex = stringToCheck.startIndex
+                let endIndex = stringToCheck.index(before: stringToCheck.endIndex)
+                if isPalindrome(&stringToCheck, startIndex, endIndex) {
                     print("\(input) is a palindrome!\n")
                 } else {
                     print("\(input) is NOT a palindrome!\n")
                 }
+            } else {
+                break
             }
         }
     } else if choice == "f" {
@@ -39,13 +39,13 @@ if let choice = readLine() {
         if let fileName = readLine(), !fileName.isEmpty {
             do {
                 let content = try String(contentsOfFile: fileName, encoding: .utf8)
-                let fileContent = content.lowercased().filter { $0.isLetter }
-                let startIndex = fileContent.startIndex
-                let endIndex = fileContent.index(before: fileContent.endIndex)
-                if isPalindrome(fileContent, startIndex, endIndex) {
-                    print("\(fileContent) is a palindrome!")
+                var stringToCheck = content.lowercased().filter { $0.isLetter }
+                let startIndex = stringToCheck.startIndex
+                let endIndex = stringToCheck.index(before: stringToCheck.endIndex)
+                if isPalindrome(&stringToCheck, startIndex, endIndex) {
+                    print("\(content) is a palindrome!")
                 } else {
-                    print("\(fileContent) is NOT a palindrome!")
+                    print("\(content) is NOT a palindrome!")
                 }
             } catch {
                 print("Error while reading a file:\n", error)
